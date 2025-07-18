@@ -53,7 +53,52 @@ class WAFProxy(BaseHTTPRequestHandler):
         self.send_response(403)
         self.send_header('Content-Type', 'text/html')
         self.end_headers()
-        response = f"<html><body><h1>403 Forbidden</h1><p>Request blocked by WAF: {reason}</p></body></html>"
+        response = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: #f8f8f8;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }}
+            .error-container {{
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                padding: 30px;
+                max-width: 600px;
+                text-align: center;
+            }}
+            h1 {{
+                color: #e74c3c;
+                margin-bottom: 20px;
+            }}
+            p {{
+                color: #555;
+                margin-bottom: 20px;
+            }}
+            .icon {{
+                font-size: 60px;
+                margin-bottom: 20px;
+                color: #e74c3c;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="error-container">
+            <h1>Access denied</h1>
+            <p>Your request has been blocked by our security system.</p>
+            <p>Reason: {reason}</p>
+        </div>
+    </body>
+    </html>
+    """
         self.wfile.write(response.encode())
     
     def _send_error(self):
@@ -61,7 +106,55 @@ class WAFProxy(BaseHTTPRequestHandler):
         self.send_response(500)
         self.send_header('Content-Type', 'text/html')
         self.end_headers()
-        self.wfile.write(b"<html><body><h1>500 Internal Server Error</h1></body></html>")
+        response = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: #f8f8f8;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }}
+            .error-container {{
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                padding: 30px;
+                max-width: 600px;
+                text-align: center;
+            }}
+            h1 {{
+                color: #e74c3c;
+                margin-bottom: 20px;
+            }}
+            p {{
+                color: #555;
+                margin-bottom: 20px;
+            }}
+            .icon {{
+                font-size: 60px;
+                margin-bottom: 20px;
+                color: #e74c3c;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="error-container">
+            <h1>500 Internal Server Error</h1>
+            <p>Your request has encountered an unexpected error.</p>
+            <p>Reason: {reason}</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    # Convertir la chaîne formatée en bytes pour l'écriture
+        self.wfile.write(response.encode())
     
     def _forward_request(self, request_data):
         """Forward request to backend server."""
@@ -71,7 +164,54 @@ class WAFProxy(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'text/html')
         self.end_headers()
-        self.wfile.write(b"<html><body><h1>Request passed WAF checks</h1></body></html>")
+        response = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: #f8f8f8;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }}
+            .error-container {{
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                padding: 30px;
+                max-width: 600px;
+                text-align: center;
+            }}
+            h1 {{
+                color: #e74c3c;
+                margin-bottom: 20px;
+            }}
+            p {{
+                color: #555;
+                margin-bottom: 20px;
+            }}
+            .icon {{
+                font-size: 60px;
+                margin-bottom: 20px;
+                color: #e74c3c;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="error-container">
+            <h1>Request Passed</h1>
+            <p>Your request has passed all WAF checks.</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    # Convertir la chaîne formatée en bytes pour l'écriture
+        self.wfile.write(response.encode())
 
 
 class WAFEngine:
