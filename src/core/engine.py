@@ -147,7 +147,6 @@ class WAFProxy(BaseHTTPRequestHandler):
         <div class="error-container">
             <h1>500 Internal Server Error</h1>
             <p>Your request has encountered an unexpected error.</p>
-            <p>Reason: {reason}</p>
         </div>
     </body>
     </html>
