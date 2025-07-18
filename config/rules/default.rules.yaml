@@ -1,0 +1,72 @@
+# Default WAF Rules
+
+rules:
+  # SQL Injection Protection
+  - id: sql-injection-1
+    name: SQL Injection Attack
+    description: Detects common SQL injection patterns
+    tags: [sql, injection, database]
+    priority: high
+    match:
+      - target: any
+        pattern: "(?i)(union\\s+select|select\\s+@@|select\\s+from\\s+information_schema)"
+      - target: any
+        pattern: "(?i)(or\\s+1=1|\\bor\\b\\s+\\btrue\\b)"
+    actions: [block, log]
+
+  # XSS Protection
+  - id: xss-1
+    name: Cross-site Scripting Attack
+    description: Detects common XSS patterns
+    tags: [xss, script, injection]
+    priority: high
+    match:
+      - target: any
+        pattern: "(?i)(<script>|javascript:|onload=|onerror=)"
+      - target: any
+        pattern: "(?i)(\\balert\\b\\s*\\(|\\beval\\b\\s*\\()"
+    actions: [block, log]
+
+  # Path Traversal Protection
+  - id: path-traversal-1
+    name: Path Traversal Attack
+    description: Detects directory traversal attempts
+    tags: [traversal, file, lfi]
+    priority: high
+    match:
+      target: path
+      pattern: "(?i)(\\.\\./|\\.\\.\\\\/|/etc/passwd|/windows/win.ini)"
+    actions: [block, log]
+
+  # Command Injection Protection
+  - id: command-injection-1
+    name: Command Injection Attack
+    description: Detects OS command injection attempts
+    tags: [command, injection, os]
+    priority: high
+    match:
+      target: any
+      pattern: "(?i)(;\\s*rm\\s|;\\s*cat\\s|;\\s*wget\\s|\\|\\s*ping\\s)"
+    actions: [block, log]
+
+  # File Upload Protection
+  - id: file-upload-1
+    name: Malicious File Upload
+    description: Detects potentially dangerous file uploads
+    tags: [upload, file]
+    priority: medium
+    match:
+      target: any
+      pattern: "(?i)\\.(php|phtml|php3|php4|php5|jsp|asp|aspx|exe|sh|bash|pl)$"
+    actions: [block, log]
+
+  # Bad User Agent Protection
+  - id: bad-user-agent-1
+    name: Suspicious User Agent
+    description: Detects known malicious user agents
+    tags: [user-agent, scanner]
+    priority: low
+    match:
+      target: header
+      pattern: "(?i)(nikto|sqlmap|acunetix|nessus|nmap|burpsuite|masscan)"
+    actions: [block, log]
