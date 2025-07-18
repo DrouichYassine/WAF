@@ -11,7 +11,7 @@ rules:
       - target: any
         pattern: "(?i)(union\\s+select|select\\s+@@|select\\s+from\\s+information_schema)"
       - target: any
-        pattern: "(?i)(or\\s+1=1|\\bor\\b\\s+\\btrue\\b)"
+        pattern: "(?i)(or\\s+1=1|\\bor\\b\\s+\\btrue\\b|\\bor\\b\\s+\\d+\\s*=\\s*\\d+|\\bor\\b\\s+'[^']+'\\s*=\\s*'[^']+')"
     actions: [block, log]
 
   # XSS Protection
@@ -45,8 +45,10 @@ rules:
     tags: [command, injection, os]
     priority: high
     match:
-      target: any
-      pattern: "(?i)(;\\s*rm\\s|;\\s*cat\\s|;\\s*wget\\s|\\|\\s*ping\\s)"
+      - target: any
+        pattern: "(?i)(;|\\||\\|\\||&|&&|`|\\$\\(|\\$\\{)\\s*([a-z0-9_\\-/\\\\]*\\s*)?(cat|ls|dir|rm|del|cp|mv|chmod|chown|touch|wget|curl|ping|nc|netcat|bash|sh|cmd(\\.exe)?|powershell|nslookup|tracert|traceroute)"
+      - target: any
+        pattern: "(?i)(\\bsystem\\b|\\bexec\\b|\\bpopen\\b|\\bshell_exec\\b|\\bpassthru\\b|\\bproc_open\\b|\\bpcntl_exec\\b)\\s*\\("
     actions: [block, log]
 
   # File Upload Protection
