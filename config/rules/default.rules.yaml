@@ -12,9 +12,17 @@ rules:
       - target: any
         pattern: "(?i)(union\\s+select|select\\s+@@|select\\s+from\\s+information_schema)"
         
-      # Boolean-based injections - Common patterns without requiring comments
+      # Boolean-based injections with numeric values
       - target: any
         pattern: "(?i)(\\bor\\b\\s+'?\\s*1\\s*=\\s*1|\\bor\\b\\s+'?true'?|\\bor\\b\\s+\\d+\\s*=\\s*\\d+\\b|\\band\\b\\s+\\d+\\s*=\\s*\\d+\\b|\\bxor\\b\\s+\\d+\\s*=\\s*\\d+\\b)"
+        
+      # String literal comparisons (covers 'a'='a' patterns)
+      - target: any
+        pattern: "(?i)(\\bor\\b\\s+(['\"])[^'\"]*\\2\\s*=\\s*(['\"])[^'\"]*\\3|\\band\\b\\s+(['\"])[^'\"]*\\4\\s*=\\s*(['\"])[^'\"]*\\5)"
+      
+      # Additional string patterns with LIKE operator
+      - target: any
+        pattern: "(?i)(\\bor\\b\\s+(['\"])[^'\"]*\\2\\s+like\\s+(['\"])[^'\"]*\\3|\\band\\b\\s+(['\"])[^'\"]*\\4\\s+like\\s+(['\"])[^'\"]*\\5)"
         
       # Time-based and other advanced injection techniques
       - target: any
@@ -41,8 +49,25 @@ rules:
     tags: [traversal, file, lfi]
     priority: high
     match:
-      target: path
-      pattern: "(?i)(\\.\\./.*\\.|\\.\\.\\\\.*\\.|/etc/passwd|/etc/shadow|/windows/win.ini|boot\\.ini|web\\.config)"
+      # Check URL path for traversal sequences
+      - target: path
+        pattern: "(?i)(\\.\\.(/|\\\\)|%2e%2e(/|\\\\)|%252e%252e(/|\\\\))"
+        
+      # Check query parameters for traversal sequences
+      - target: args
+        pattern: "(?i)(\\.\\.(/|\\\\)|%2e%2e(/|\\\\)|%252e%252e(/|\\\\))"
+        
+      # Check for sensitive files and paths
+      - target: any
+        pattern: "(?i)(/etc/(passwd|shadow|hosts|group)|/windows/win\\.ini|boot\\.ini|web\\.config|wp-config\\.php|config\\.php)"
+        
+      # Check for URL-encoded traversal sequences 
+      - target: any
+        pattern: "(?i)(%2e%2e%2f|%2e%2e\\\\|%252e%252e%252f|%c0%ae%c0%ae)"
+        
+      # Check for multiple traversals with various delimiters
+      - target: any
+        pattern: "(?i)(\\.\\.(/|\\\\)\\.\\.(/|\\\\)|\\.\\.(/|\\\\)\\.\\.(/|\\\\)\\.\\.(/|\\\\))"
     actions: [block, log]
 
     # Command Injection Protection
@@ -82,15 +107,4 @@ rules:
     match:
       target: any
       pattern: "(?i)\\.(php|phtml|php3|php4|php5|jsp|asp|aspx|exe|sh|bash|pl)$"
-    actions: [block, log]
-
-  # Bad User Agent Protection
-  - id: bad-user-agent-1
-    name: Suspicious User Agent
-    description: Detects known malicious user agents
-    tags: [user-agent, scanner]
-    priority: low
-    match:
-      target: header
-      pattern: "(?i)(nikto|sqlmap|acunetix|nessus|nmap|burpsuite|masscan)"
     actions: [block, log]
