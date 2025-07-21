@@ -1,17 +1,24 @@
 # Default WAF Rules
 
 rules:
-  # SQL Injection Protection
+    # SQL Injection Protection
   - id: sql-injection-1
     name: SQL Injection Attack
     description: Detects common SQL injection patterns
     tags: [sql, injection, database]
     priority: high
     match:
+      # UNION-based and information gathering injections
       - target: any
         pattern: "(?i)(union\\s+select|select\\s+@@|select\\s+from\\s+information_schema)"
+        
+      # Boolean-based injections - Common patterns without requiring comments
       - target: any
-        pattern: "(?i)(or\\s+1=1|\\bor\\b\\s+\\btrue\\b|\\bor\\b\\s+\\d+\\s*=\\s*\\d+|\\bor\\b\\s+'[^']+'\\s*=\\s*'[^']+')"
+        pattern: "(?i)(\\bor\\b\\s+'?\\s*1\\s*=\\s*1|\\bor\\b\\s+'?true'?|\\bor\\b\\s+\\d+\\s*=\\s*\\d+\\b|\\band\\b\\s+\\d+\\s*=\\s*\\d+\\b|\\bxor\\b\\s+\\d+\\s*=\\s*\\d+\\b)"
+        
+      # Time-based and other advanced injection techniques
+      - target: any
+        pattern: "(?i)(sleep\\s*\\(|benchmark\\s*\\(|pg_sleep\\s*\\(|waitfor\\s+delay\\s*)"
     actions: [block, log]
 
   # XSS Protection
@@ -22,9 +29,9 @@ rules:
     priority: high
     match:
       - target: any
-        pattern: "(?i)(<script>|javascript:|onload=|onerror=)"
+        pattern: "(?i)(<script>[^<]*?(</script>|alert|document\\.)|javascript:\\s*[^;]+\\s*\\(|\\bon(load|error|click)\\s*=\\s*[\"'])"
       - target: any
-        pattern: "(?i)(\\balert\\b\\s*\\(|\\beval\\b\\s*\\()"
+        pattern: "(?i)(\\balert\\b\\s*\\([^)]*?\\)|\\beval\\b\\s*\\([^)]*?\\)|document\\.cookie|document\\.location)"
     actions: [block, log]
 
   # Path Traversal Protection
@@ -35,20 +42,35 @@ rules:
     priority: high
     match:
       target: path
-      pattern: "(?i)(\\.\\./|\\.\\.\\\\/|/etc/passwd|/windows/win.ini)"
+      pattern: "(?i)(\\.\\./.*\\.|\\.\\.\\\\.*\\.|/etc/passwd|/etc/shadow|/windows/win.ini|boot\\.ini|web\\.config)"
     actions: [block, log]
 
-  # Command Injection Protection
+    # Command Injection Protection
   - id: command-injection-1
     name: Command Injection Attack
     description: Detects OS command injection attempts
     tags: [command, injection, os]
     priority: high
     match:
+      # Command separators followed by common commands
       - target: any
-        pattern: "(?i)(;|\\||\\|\\||&|&&|`|\\$\\(|\\$\\{)\\s*([a-z0-9_\\-/\\\\]*\\s*)?(cat|ls|dir|rm|del|cp|mv|chmod|chown|touch|wget|curl|ping|nc|netcat|bash|sh|cmd(\\.exe)?|powershell|nslookup|tracert|traceroute)"
+        pattern: "(?i)(;|\\||\\|\\||&|&&)\\s*([a-zA-Z0-9_\\-/\\\\]*\\s*)?(cat|ls|dir|rm|del|cp|mv|touch|chmod|chown|wget|curl|ping|nc|netcat|bash|sh|cmd|powershell|nslookup|tracert|whoami|id|echo|find|grep)\\b"
+        
+      # Command execution via backticks/subshells
       - target: any
-        pattern: "(?i)(\\bsystem\\b|\\bexec\\b|\\bpopen\\b|\\bshell_exec\\b|\\bpassthru\\b|\\bproc_open\\b|\\bpcntl_exec\\b)\\s*\\("
+        pattern: "(?i)(`|\\$\\(|\\$\\{).*?(`|\\)|\\})"
+        
+      # Direct command execution functions
+      - target: any
+        pattern: "(?i)(system|exec|popen|shell_exec|passthru|proc_open|eval)\\s*\\("
+        
+      # Shell execution patterns
+      - target: any
+        pattern: "(?i)(\\/(bin|usr|opt)\\/[a-z]+\\s|\\\\(windows|system32)\\\\[a-z]+\\.exe)"
+        
+      # Common special character bypass techniques
+      - target: any
+        pattern: "(?i)(\\${IFS}|%0[aA]|\\\\n|\\^|\\\\x[0-9a-fA-F]{2})"
     actions: [block, log]
 
   # File Upload Protection
