@@ -2,7 +2,7 @@
 Core WAF engine module responsible for processing HTTP traffic
 and applying security rules.
 """
-
+import http.client
 import logging
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from src.rules.rule_loader import RuleLoader
@@ -156,61 +156,24 @@ class WAFProxy(BaseHTTPRequestHandler):
         self.wfile.write(response.encode())
     
     def _forward_request(self, request_data):
-        """Forward request to backend server."""
-        # This is a simplified version. In a real implementation,
-        # we would forward the request to the backend server
-        # and relay the response back to the client.
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/html')
-        self.end_headers()
-        response = f"""
-    <html>
-    <head>
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                background-color: #f8f8f8;
-                margin: 0;
-                padding: 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-            }}
-            .error-container {{
-                background-color: white;
-                border-radius: 8px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                padding: 30px;
-                max-width: 600px;
-                text-align: center;
-            }}
-            h1 {{
-                color: #e74c3c;
-                margin-bottom: 20px;
-            }}
-            p {{
-                color: #555;
-                margin-bottom: 20px;
-            }}
-            .icon {{
-                font-size: 60px;
-                margin-bottom: 20px;
-                color: #e74c3c;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="error-container">
-            <h1>Request Passed</h1>
-            <p>Your request has passed all WAF checks.</p>
-        </div>
-    </body>
-    </html>
-    """
     
-    # Convertir la chaîne formatée en bytes pour l'écriture
-        self.wfile.write(response.encode())
+        backend_host = "localhost"
+        backend_port = 8000
+        conn = http.client.HTTPConnection(backend_host, backend_port)
+        # Forward the path, method, headers, and body (if any)
+        conn.request(
+            self.command,
+            self.path,
+            body=request_data.get('body'),
+            headers=self.headers
+        )
+        backend_response = conn.getresponse()
+        self.send_response(backend_response.status)
+        for header, value in backend_response.getheaders():
+            self.send_header(header, value)
+        self.end_headers()
+        self.wfile.write(backend_response.read())
+        conn.close()
 
 
 class WAFEngine:
