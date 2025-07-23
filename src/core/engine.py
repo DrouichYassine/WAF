@@ -164,7 +164,7 @@ class WAFProxy(BaseHTTPRequestHandler):
         conn.request(
             self.command,
             self.path,
-            body=request_data.get('body'),
+            body=request_data.get('raw_body'),
             headers=self.headers
         )
         backend_response = conn.getresponse()
