@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-PyWAF - Python Web Application Firewall
-Main entry point for the WAF application
+PyWAF - Pare-feu d'application Web en Python
+Point d'entrée principal de l'application WAF
 """
 
 import os
@@ -12,7 +12,7 @@ from src.core.config import ConfigManager
 from src.utils.logger import setup_logging
 
 def parse_arguments():
-    """Parse command line arguments."""
+    # Analyser les arguments de la ligne de commande.
     parser = argparse.ArgumentParser(description='Python Web Application Firewall')
     parser.add_argument('-c', '--config', default='config/waf.conf',
                         help='Path to configuration file')
@@ -21,19 +21,19 @@ def parse_arguments():
     return parser.parse_args()
 
 def main():
-    """Main entry point for the WAF."""
+    # Point d'entrée principal pour le WAF.
     args = parse_arguments()
-    
-    # Setup logging
+
+    # Configurer la journalisation
     log_level = 'DEBUG' if args.debug else 'INFO'
     setup_logging(log_level)
-    
-    # Load configuration
+
+    # Charger la configuration
     config_manager = ConfigManager(args.config)
     config = config_manager.load_config()
     
     try:
-        # Initialize and start the WAF engine
+        # Initialiser et démarrer le moteur WAF
         engine = WAFEngine(config)
         engine.start()
     except KeyboardInterrupt:

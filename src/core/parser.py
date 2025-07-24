@@ -1,16 +1,14 @@
-"""
-HTTP request/response parser.
-"""
+# Analyseur de requêtes/réponses HTTP.
 
 import urllib.parse
 import json
 import logging
 
 class HTTPParser:
-    """Parser for HTTP requests and responses."""
+    # Analyseur pour les requêtes et réponses HTTP.
     
     def __init__(self, headers, path, method, body=None):
-        """Initialize with HTTP request data."""
+        # Initialiser avec les données de la requête HTTP.
         self.headers = headers
         self.path = path
         self.method = method
@@ -18,16 +16,16 @@ class HTTPParser:
         self.logger = logging.getLogger('waf.parser')
     
     def parse_request(self):
-        """Parse HTTP request into structured data for rule processing."""
+        # Analyser la requête HTTP en données structurées pour le traitement des règles.
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
         
-        # Parse query parameters
+        # Analyser les paramètres de requête
         query_params = {}
         if parsed_url.query:
             query_params = dict(urllib.parse.parse_qsl(parsed_url.query))
         
-        # Parse cookies
+        # Analyser les cookies
         cookies = {}
         cookie_header = self.headers.get('Cookie', '')
         if cookie_header:
@@ -37,7 +35,7 @@ class HTTPParser:
                     key, value = part.split('=', 1)
                     cookies[key] = value
         
-        # Parse body data
+        # Analyser les données du corps
         body_data = {}
         content_type = self.headers.get('Content-Type', '')
         
@@ -54,7 +52,7 @@ class HTTPParser:
                 except json.JSONDecodeError as e:
                     self.logger.warning(f"Failed to parse JSON data: {e}")
         
-        # Create structured request data
+        # Créer des données de requête structurées
         request_data = {
             'method': self.method,
             'path': path,

@@ -1,6 +1,5 @@
-"""
-Rule matcher module for applying WAF rules to HTTP requests.
-"""
+#Module de correspondance de règles pour appliquer les règles WAF aux requêtes HTTP.
+
 
 import logging
 import re
@@ -9,29 +8,29 @@ from typing import List, Dict, Any, Optional
 
 @dataclass
 class MatchResult:
-    """Result of a rule matching operation."""
+    # Résultat d'une opération de correspondance de règle.
     blocked: bool = False
     rule_id: Optional[str] = None
     reason: Optional[str] = None
     actions: List[str] = None
 
 class RuleMatcher:
-    """Apply WAF rules to HTTP requests."""
-    
+    # Applique les règles WAF aux requêtes HTTP.
+
     def __init__(self, rules):
-        """Initialize with a list of WAF rules."""
+        # Initialise avec une liste de règles WAF.
         self.rules = rules
         self.logger = logging.getLogger('waf.matcher')
     
     def match_request(self, request_data):
         """
-        Apply all rules to the request and return the result.
+        Applique toutes les règles à la requête et retourne le résultat.
         
         Args:
-            request_data: Dictionary containing parsed HTTP request data
+            request_data: Dictionnaire contenant les données HTTP de la requête analysée
             
         Returns:
-            MatchResult: Result of rule matching operation
+            MatchResult: Résultat de l'opération de correspondance de règle
         """
         for rule in self.rules:
             if not rule.enabled:
@@ -45,14 +44,14 @@ class RuleMatcher:
     
     def _match_rule(self, rule, request_data):
         """
-        Apply a single rule to the request data.
+        Applique une seule règle aux données de la requête.
         
         Args:
-            rule: The Rule object to apply
-            request_data: Dictionary containing parsed HTTP request data
+            rule: L'objet Rule à appliquer
+            request_data: Dictionnaire contenant les données HTTP de la requête analysée
             
         Returns:
-            MatchResult: Result of rule matching operation
+            MatchResult: Résultat de l'opération de correspondance de règle
         """
         for match_pattern in rule.match_patterns:
             if self._match_pattern(match_pattern, request_data):
@@ -68,14 +67,14 @@ class RuleMatcher:
     
     def _match_pattern(self, match_pattern, request_data):
         """
-        Match a single pattern against the request data.
+        Correspond à un seul motif contre les données de la requête.
         
         Args:
-            match_pattern: Dictionary containing pattern and target
-            request_data: Dictionary containing parsed HTTP request data
+            match_pattern: Dictionnaire contenant le motif et la cible
+            request_data: Dictionnaire contenant les données HTTP de la requête analysée
             
         Returns:
-            bool: True if pattern matches, False otherwise
+            bool: True si le motif correspond, False sinon
         """
         if 'compiled_pattern' not in match_pattern or not match_pattern['compiled_pattern']:
             return False
@@ -83,50 +82,50 @@ class RuleMatcher:
         target = match_pattern.get('target', 'any')
         pattern = match_pattern['compiled_pattern']
         
-        # Match against specific parts of the request
+        # Correspondance avec des parties spécifiques de la requête
         if target == 'url' or target == 'path':
             return bool(pattern.search(request_data['path']))
         
         elif target == 'query':
-            # Match against any query parameter
+            # Correspondance avec n'importe quel paramètre de requête
             for param, value in request_data['query'].items():
                 if pattern.search(param) or pattern.search(str(value)):
                     return True
         
         elif target == 'body':
-            # Match against body content
+            # Correspondance avec le contenu du corps
             if request_data['raw_body'] and pattern.search(str(request_data['raw_body'])):
                 return True
             
-            # Match against parsed body parameters
+            # Correspondance avec les paramètres du corps analysés
             for param, value in request_data['body'].items():
                 if pattern.search(param) or pattern.search(str(value)):
                     return True
         
         elif target == 'header':
-            # Match against any header
+            # Correspondance avec n'importe quel en-tête
             for header, value in request_data['headers'].items():
                 if pattern.search(header.lower()) or pattern.search(str(value)):
                     return True
         
         elif target == 'cookie':
-            # Match against any cookie
+            # Correspondance avec n'importe quel cookie
             for cookie, value in request_data['cookies'].items():
                 if pattern.search(cookie) or pattern.search(str(value)):
                     return True
         
         elif target == 'any':
-            # Try to match against all parts of the request
-            # Path
+            # Essaye de faire correspondre avec toutes les parties de la requête
+            # Chemin
             if pattern.search(request_data['path']):
                 return True
             
-            # Query parameters
+            # Paramètres de requête
             for param, value in request_data['query'].items():
                 if pattern.search(param) or pattern.search(str(value)):
                     return True
             
-            # Headers
+            # En-têtes
             for header, value in request_data['headers'].items():
                 if pattern.search(header.lower()) or pattern.search(str(value)):
                     return True
@@ -136,11 +135,11 @@ class RuleMatcher:
                 if pattern.search(cookie) or pattern.search(str(value)):
                     return True
             
-            # Body content
+            # Contenu du corps
             if request_data['raw_body'] and pattern.search(str(request_data['raw_body'])):
                 return True
             
-            # Body parameters
+            # Paramètres du corps
             for param, value in request_data['body'].items():
                 if pattern.search(param) or pattern.search(str(value)):
                     return True

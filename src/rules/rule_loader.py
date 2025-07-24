@@ -1,6 +1,5 @@
-"""
-Rule loader module for loading and parsing WAF rules.
-"""
+#Module de chargement des règles pour charger et analyser les règles WAF.
+
 
 import os
 import json
@@ -12,7 +11,7 @@ from typing import List, Dict, Any, Optional
 
 @dataclass
 class Rule:
-    """WAF rule definition."""
+    #Définition d'une règle WAF.
     id: str
     name: str
     description: str
@@ -23,37 +22,37 @@ class Rule:
     enabled: bool = True
 
 class RuleLoader:
-    """Load and parse WAF rules from files."""
-    
+    #Charger et analyser les règles WAF à partir de fichiers.
+
     def __init__(self, rules_path):
-        """Initialize with path to rules directory."""
+        #Initialiser avec le chemin du répertoire des règles.
         self.rules_path = rules_path
         self.logger = logging.getLogger('waf.rules')
     
     def load_rules(self):
-        """Load all rules from the rules directory."""
+        #Charger toutes les règles depuis le répertoire des règles.
         rules = []
         
         if not os.path.exists(self.rules_path):
             self.logger.error(f"Rules directory not found: {self.rules_path}")
             raise FileNotFoundError(f"Rules directory not found: {self.rules_path}")
         
-        # If rules_path is a directory, load all rule files
+        # Si rules_path est un répertoire, charger tous les fichiers de règles
         if os.path.isdir(self.rules_path):
             for filename in os.listdir(self.rules_path):
                 if filename.endswith(('.json', '.yaml', '.yml')):
                     file_path = os.path.join(self.rules_path, filename)
                     rules.extend(self._load_rule_file(file_path))
         
-        # If rules_path is a file, load just that file
+        # Si rules_path est un fichier, charger uniquement ce fichier
         elif os.path.isfile(self.rules_path):
             rules.extend(self._load_rule_file(self.rules_path))
         
-        self.logger.info(f"Loaded {len(rules)} WAF rules")
+        self.logger.info(f"{len(rules)} WAF rules loaded")
         return rules
     
     def _load_rule_file(self, file_path):
-        """Load rules from a single file."""
+        #Charger les règles à partir d'un seul fichier.
         try:
             file_ext = os.path.splitext(file_path)[1].lower()
             
@@ -70,7 +69,7 @@ class RuleLoader:
                 return []
             
             rules = self._parse_rules(rule_data, file_path)
-            self.logger.debug(f"Loaded {len(rules)} rules from {file_path}")
+            self.logger.debug(f"{len(rules)} rules loaded from {file_path}")
             return rules
         
         except Exception as e:
@@ -78,7 +77,7 @@ class RuleLoader:
             return []
     
     def _parse_rules(self, rule_data, file_path):
-        """Parse loaded rule data into Rule objects."""
+        #Analyser les données de règles chargées en objets Rule.
         rules = []
         
         if isinstance(rule_data, list):
@@ -101,16 +100,16 @@ class RuleLoader:
         return rules
     
     def _parse_rule(self, rule_data, file_path):
-        """Parse a single rule from data."""
+        #Analyser une seule règle à partir des données.
         try:
-            # Validate required fields
+            # Valider les champs obligatoires
             required_fields = ['id', 'match']
             for field in required_fields:
                 if field not in rule_data:
-                    self.logger.warning(f"Rule in {file_path} is missing required field: {field}")
+                    self.logger.warning(f"Règle dans {file_path} sans champ obligatoire : {field}")
                     return None
             
-            # Compile regex patterns
+            # Compiler les motifs regex
             match_patterns = []
             match_data = rule_data['match']
             
@@ -122,7 +121,7 @@ class RuleLoader:
                 self._compile_pattern(match_data)
                 match_patterns = [match_data]
             
-            # Create Rule object
+            # Créer l'objet Rule
             rule = Rule(
                 id=rule_data['id'],
                 name=rule_data.get('name', rule_data['id']),
@@ -141,7 +140,7 @@ class RuleLoader:
             return None
     
     def _compile_pattern(self, match_data):
-        """Compile regex pattern in match data."""
+        #Compiler le motif regex dans les données de correspondance.
         if 'pattern' in match_data and isinstance(match_data['pattern'], str):
             try:
                 match_data['compiled_pattern'] = re.compile(match_data['pattern'])
